@@ -4,14 +4,13 @@
     "target": "es2023",
     "lib": ["es2023"],
     "outDir": "dist",
-    "rootDir": "src",
     "strict": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "sourceMap": true,
-    "types": ["node"]
+    "types": ["node", "vitest/globals"]
   },
-  "include": ["src"]
+  "include": ["src", "test", "vitest.config.e2e.mts", "drizzle.config.ts"]
 }
