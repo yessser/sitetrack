@@ -14,7 +14,7 @@ async function bootstrap() {
     origin: process.env.CORS_ORIGIN?.split(',') ?? false,
     credentials: true,
   });
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
   app.enableShutdownHooks();
   await app.listen(Number(process.env.PORT ?? 3000), '0.0.0.0');
 }

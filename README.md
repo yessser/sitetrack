@@ -27,6 +27,14 @@ i will be using this readme to explain some of my thought process and assumption
   - having postgress handle the auth probably means i should purge the history of sessions at some point
   - i usually would rely on cloudflare or similair reverse proxy to stop brutefrocing/DDOS ect but thats devops in my case i will simply use nestjs throttle for simple application level throttling but it has its limits alone and would require some other setup alongside it for proper security. 
   - for the roles im sticking to a simple enum. in this type of app where permissions may differ in the future we may want them to be user editable and thus runtime editable. it adds a few tables and a lot of niche scenarios to handle 
+
+
+in this step i realized i have not been writing tests and did not explain that part of choosing nestJS was that too. so i will do it along creating the tables
+# project table assumptions
+  - superadmins get full rights on every project as if they were a project admin (edit, delete, manage members), not just read access. a non member project admin action from a regular member returns 403 since they already know the project exists, a non member always gets 404
+  - unique sequential codes: the project id is a postgres identity column (a sequence). `nextval` is atomic and lives outside transactions, so two inserts at the same moment can never get the same number, and a number is never handed out twice even after a rollback or a delete. the `PRJ-0042` code is a generated column computed by postgres from that id (padded to 4 digits, keeps growing past `PRJ-9999`) with a unique constraint as a safety net. the trade off is that a failed insert leaves a gap in the numbering, which the brief allows since it only asks for unique, counting up and never reused
+  - pagination: lists can get big (a superadmin sees all 2000 projects, a project has up to 3000 tasks, deliveries have millions of lines), returning everything would blow up response size and memory on a small server. lists take `?limit` (default 50, max 200) and `?offset` and return `{ items, total, limit, offset }`, the total comes from a `count(*) over ()` window in the same query so it costs no extra round trip. offset gets slower on very deep pages and rows can shift if something is inserted while paging, keyset/cursor pagination would fix both but isnt worth it at this size
+  - deleting a project is implemented as a soft delete since the brief asks for remove, but in a real construction company i dont think deleting should be the normal action. a project carries history (tasks, deliveries, stock that physically sits on site) and losing access to it breaks reporting and inventory tracking. archiving (read only, hidden from default lists, restorable) would be the better default and deleting would be reserved for mistakes. not implemented here
 ----------
 # Models
 
