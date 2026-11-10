@@ -25,7 +25,8 @@ i will be using this readme to explain some of my thought process and assumption
 # user table assumptions
   - initially im not setting any CORS/CSRF and assuming everything is in this project under same url
   - having postgress handle the auth probably means i should purge the history of sessions at some point
-  - i usually would rely on cloudflare or similair reverse proxy to stop brutefrocing/DDOS ect but thats devops in my case i will simply use nestjs throttle for simple application level throttling but it has its limits alone and would require some other setup alongside it for proper security 
+  - i usually would rely on cloudflare or similair reverse proxy to stop brutefrocing/DDOS ect but thats devops in my case i will simply use nestjs throttle for simple application level throttling but it has its limits alone and would require some other setup alongside it for proper security. 
+  - for the roles im sticking to a simple enum. in this type of app where permissions may differ in the future we may want them to be user editable and thus runtime editable. it adds a few tables and a lot of niche scenarios to handle 
 ----------
 # Models
 
@@ -68,3 +69,39 @@ classDiagram
 | POST | `/auth/refresh` | refresh cookie | rotates both cookies; an old refresh token is rejected |
 | POST | `/auth/logout` | refresh cookie | revokes current session, clears cookies |
 | GET | `/me` | access cookie | own profile (never the hash) |
+
+## Project
+
+```mermaid
+classDiagram
+  class Project {
+    int id PK "identity sequence"
+    text code UNIQUE "generated: PRJ-0042"
+    text name
+    date start_date
+    date end_date
+    uuid created_by FK
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz deleted_at NULL
+  }
+  class ProjectMember {
+    int project_id PK,FK
+    uuid user_id PK,FK
+    bool is_admin
+    timestamptz joined_at
+  }
+  User "1" --> "*" ProjectMember
+  Project "1" --> "*" ProjectMember
+```
+
+| Method | Path | Who |
+|---|---|---|
+| POST | `/projects` | any logged-in user; creator becomes project admin |
+| GET | `/projects` | projects the caller can access |
+| GET | `/projects/:code` | members, SuperAdmin |
+| PATCH | `/projects/:code` | project admins, SuperAdmin |
+| DELETE | `/projects/:code` | project admins, SuperAdmin (soft delete) |
+| GET | `/projects/:code/members` | members, SuperAdmin |
+| POST | `/projects/:code/members/:userId/admin` | project admins, SuperAdmin |
+| DELETE | `/projects/:code/members/:userId` | project admins, SuperAdmin |
