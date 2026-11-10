@@ -20,6 +20,11 @@ services:
     environment:
       DATABASE_URL: postgres://sitetrack:sitetrack@db:5432/sitetrack
       PORT: 3000
+      # Dev defaults so `docker compose up` works as-is; override in real deployments.
+      JWT_SECRET: ${JWT_SECRET:-dev-only-insecure-jwt-secret-change-me-0123456789}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      THROTTLE_LIMIT: ${THROTTLE_LIMIT:-600}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
     ports:
       - "3000:3000"
     depends_on:

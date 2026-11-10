@@ -1,2 +1,2 @@
-// Each domain adds its tables here.
-export {};
+export * from './users';
+export * from './sessions';

@@ -22,7 +22,10 @@ i will be using this readme to explain some of my thought process and assumption
   
   - for docker i will use node:alpine. since its usually the smallest and secure. there may be some docker networking setting to change/set for security
 
-
+# user table assumptions
+  - initially im not setting any CORS/CSRF and assuming everything is in this project under same url
+  - having postgress handle the auth probably means i should purge the history of sessions at some point
+  - i usually would rely on cloudflare or similair reverse proxy to stop brutefrocing/DDOS ect but thats devops in my case i will simply use nestjs throttle for simple application level throttling but it has its limits alone and would require some other setup alongside it for proper security 
 ----------
 # Models
 
@@ -42,7 +45,7 @@ classDiagram
   class Session {
     uuid id PK
     uuid user_id FK
-    text refresh_token_hash UNIQUE
+    text refresh_token_hash
     timestamptz expires_at
     timestamptz revoked_at NULL
     timestamptz last_used_at
@@ -60,8 +63,8 @@ classDiagram
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
-| POST | `/auth/register` | none | name, email, password, role → profile |
-| POST | `/auth/login` | none | email, password → access + refresh token |
-| POST | `/auth/refresh` | refresh token | rotate pair; reuse of an old token revokes the session |
-| POST | `/auth/logout` | access token | revoke current session |
-| GET | `/me` | access token | own profile (never the hash) |
+| POST | `/auth/register` | none | name, email, password, role → profile (409 if email taken) |
+| POST | `/auth/login` | none | email, password → sets `access_token` + `refresh_token` httpOnly cookies |
+| POST | `/auth/refresh` | refresh cookie | rotates both cookies; an old refresh token is rejected |
+| POST | `/auth/logout` | refresh cookie | revokes current session, clears cookies |
+| GET | `/me` | access cookie | own profile (never the hash) |
