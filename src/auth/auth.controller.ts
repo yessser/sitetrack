@@ -1,4 +1,5 @@
 import { Body, Controller, HttpCode, Post, Req, Res } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import {
@@ -13,10 +14,12 @@ import { AuthService, type IssuedTokens } from './auth.service';
 import { Public } from './current-user';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { UserDto } from '../users/dto/user.dto';
 
 // Brute-force protection for the credential endpoints.
 const CREDENTIALS_THROTTLE = { default: { ttl: 60_000, limit: 10 } };
 
+@ApiTags('auth')
 @Public()
 @Controller('auth')
 export class AuthController {
@@ -24,20 +27,20 @@ export class AuthController {
 
   @Post('register')
   @Throttle(CREDENTIALS_THROTTLE)
-  register(@Body() dto: RegisterDto) {
+  register(@Body() dto: RegisterDto): Promise<UserDto> {
     return this.auth.register(dto);
   }
 
   @Post('login')
   @Throttle(CREDENTIALS_THROTTLE)
   @HttpCode(204)
-  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: FastifyReply) {
+  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: FastifyReply): Promise<void> {
     this.setCookies(res, await this.auth.login(dto));
   }
 
   @Post('refresh')
   @HttpCode(204)
-  async refresh(@Req() req: FastifyRequest, @Res({ passthrough: true }) res: FastifyReply) {
+  async refresh(@Req() req: FastifyRequest, @Res({ passthrough: true }) res: FastifyReply): Promise<void> {
     try {
       this.setCookies(res, await this.auth.refresh(req.cookies[REFRESH_COOKIE]));
     } catch (err) {
@@ -48,7 +51,7 @@ export class AuthController {
 
   @Post('logout')
   @HttpCode(204)
-  async logout(@Req() req: FastifyRequest, @Res({ passthrough: true }) res: FastifyReply) {
+  async logout(@Req() req: FastifyRequest, @Res({ passthrough: true }) res: FastifyReply): Promise<void> {
     await this.auth.logout(req.cookies[REFRESH_COOKIE]);
     this.clearCookies(res);
   }

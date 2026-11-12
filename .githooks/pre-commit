@@ -1,0 +1,6 @@
+#!/bin/sh
+# Regenerates docs/openapi.json whenever source files are part of the commit.
+if git diff --cached --name-only | grep -q '^src/'; then
+  npm run --silent docs:generate || exit 1
+  git add docs/openapi.json
+fi

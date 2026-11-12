@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsIn, IsString, MaxLength, MinLength } from 'class-validator';
 import { appRole, type AppRole } from '../../db/schema';
 
@@ -16,6 +17,7 @@ export class RegisterDto {
   @MaxLength(200)
   password!: string;
 
+  @ApiProperty({ enum: appRole.enumValues })
   @IsIn(appRole.enumValues)
   role!: AppRole;
 }

@@ -29,7 +29,7 @@ i will be using this readme to explain some of my thought process and assumption
   - for the roles im sticking to a simple enum. in this type of app where permissions may differ in the future we may want them to be user editable and thus runtime editable. it adds a few tables and a lot of niche scenarios to handle 
 
 
-in this step i realized i have not been writing tests and did not explain that part of choosing nestJS was that too. so i will do it along creating the tables
+in this step i realized i have not been writing tests and did not explain that part of choosing nestJS was that too(along with keeping swagger docs in sync). so i will do it along creating the tables
 # project table assumptions
   - superadmins get full rights on every project as if they were a project admin (edit, delete, manage members), not just read access. a non member project admin action from a regular member returns 403 since they already know the project exists, a non member always gets 404
   - unique sequential codes: the project id is a postgres identity column (a sequence). `nextval` is atomic and lives outside transactions, so two inserts at the same moment can never get the same number, and a number is never handed out twice even after a rollback or a delete. the `PRJ-0042` code is a generated column computed by postgres from that id (padded to 4 digits, keeps growing past `PRJ-9999`) with a unique constraint as a safety net. the trade off is that a failed insert leaves a gap in the numbering, which the brief allows since it only asks for unique, counting up and never reused
