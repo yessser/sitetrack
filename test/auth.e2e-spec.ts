@@ -99,6 +99,31 @@ describe('auth', () => {
       expect((await replay.post('/auth/refresh')).status).toBe(401);
     });
 
+    it('replaying a rotated refresh token revokes the whole session', async () => {
+      const user = await signUp(app);
+      const stolenRefresh = user.cookies.get('refresh_token')!.value;
+      expect((await user.post('/auth/refresh')).status).toBe(204);
+
+      const thief = new TestClient(app);
+      thief.cookies.set('refresh_token', { value: stolenRefresh, path: '/auth' });
+      expect((await thief.post('/auth/refresh')).status).toBe(401);
+
+      // The legit user's fresh tokens die with the session too.
+      expect((await user.get('/me')).status).toBe(401);
+      expect((await user.post('/auth/refresh')).status).toBe(401);
+    });
+
+    it('a forged secret for a live session id does not revoke it', async () => {
+      const user = await signUp(app);
+      const sessionId = user.cookies.get('refresh_token')!.value.split('.')[0];
+
+      const attacker = new TestClient(app);
+      attacker.cookies.set('refresh_token', { value: `${sessionId}.${'A'.repeat(43)}`, path: '/auth' });
+      expect((await attacker.post('/auth/refresh')).status).toBe(401);
+
+      expect((await user.post('/auth/refresh')).status).toBe(204);
+    });
+
     it('logout kills the session on the very next request', async () => {
       const user = await signUp(app);
       const { access_token, refresh_token } = Object.fromEntries(user.cookies);

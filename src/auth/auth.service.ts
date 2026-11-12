@@ -67,10 +67,17 @@ export class AuthService {
     if (!parsed) throw new UnauthorizedException();
 
     const [session] = await this.db
-      .select({ refreshTokenHash: sessions.refreshTokenHash })
+      .select({ refreshTokenHash: sessions.refreshTokenHash, previousHash: sessions.previousRefreshTokenHash })
       .from(sessions)
       .where(and(eq(sessions.id, parsed.sessionId), isNull(sessions.revokedAt), gt(sessions.expiresAt, new Date())));
-    if (!session || !this.hashMatches(parsed.secret, session.refreshTokenHash)) {
+    if (!session) throw new UnauthorizedException();
+
+    if (!this.hashMatches(parsed.secret, session.refreshTokenHash)) {
+      // A rotated-out token came back: either the user or a thief holds a
+      // copy, and we can't tell which. Kill the session so both must log in.
+      if (session.previousHash && this.hashMatches(parsed.secret, session.previousHash)) {
+        await this.db.update(sessions).set({ revokedAt: new Date() }).where(eq(sessions.id, parsed.sessionId));
+      }
       throw new UnauthorizedException();
     }
 
@@ -79,7 +86,12 @@ export class AuthService {
     const secret = randomBytes(32).toString('base64url');
     const rotated = await this.db
       .update(sessions)
-      .set({ refreshTokenHash: sha256(secret), expiresAt: this.refreshExpiry(), lastUsedAt: new Date() })
+      .set({
+        refreshTokenHash: sha256(secret),
+        previousRefreshTokenHash: session.refreshTokenHash,
+        expiresAt: this.refreshExpiry(),
+        lastUsedAt: new Date(),
+      })
       .where(and(eq(sessions.id, parsed.sessionId), eq(sessions.refreshTokenHash, session.refreshTokenHash)))
       .returning({ id: sessions.id });
     if (rotated.length === 0) throw new UnauthorizedException();
