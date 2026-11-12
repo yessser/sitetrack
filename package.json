@@ -33,6 +33,7 @@
     "@nestjs/cli": "^12.0.12",
     "@nestjs/schematics": "^12.0.13",
     "@swc/core": "^1.16.22",
+    "@testcontainers/postgresql": "^12.2.1",
     "@types/node": "^26.6.6",
     "@types/pg": "^8.23.1",
     "drizzle-kit": "^0.31.11",
