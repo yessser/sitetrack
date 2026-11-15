@@ -123,32 +123,89 @@ describe('projects', () => {
       expect((await owner.delete(`/projects/PRJ-0001/members/${owner.id}`)).status).toBe(204);
     });
 
-    it('two admins removing each other at once cannot leave the project without an admin', async () => {
+    it('two admins leaving at once cannot leave the project without an admin', async () => {
       const a = await signUp(app);
       const b = await signUp(app);
       await a.post('/projects', project);
       await addMember('PRJ-0001', b.id, true);
 
       const results = await Promise.all([
-        a.delete(`/projects/PRJ-0001/members/${b.id}`),
-        b.delete(`/projects/PRJ-0001/members/${a.id}`),
+        a.delete(`/projects/PRJ-0001/members/${a.id}`),
+        b.delete(`/projects/PRJ-0001/members/${b.id}`),
       ]);
-      const { rows } = await pool.query('SELECT count(*)::int AS admins FROM project_members WHERE is_admin');
+      const { rows } = await pool.query('SELECT count(*)::int AS admins FROM project_members WHERE admin_since IS NOT NULL');
       expect(rows[0].admins).toBe(1);
-      // the loser gets 409 (last admin) or 404 (already removed) depending on timing
-      const [won, lost] = results.map((r) => r.status).sort();
-      expect(won).toBe(204);
-      expect([404, 409]).toContain(lost);
+      expect(results.map((r) => r.status).sort()).toEqual([204, 409]);
     });
 
-    it('lists admins first', async () => {
-      const owner = await signUp(app, 'user', 'Zed');
-      const member = await signUp(app, 'user', 'Abe');
+    it('an admin can demote and remove admins appointed after them, not before', async () => {
+      const senior = await signUp(app);
+      const junior = await signUp(app);
+      await senior.post('/projects', project);
+      await addMember('PRJ-0001', junior.id, true);
+
+      expect((await junior.delete(`/projects/PRJ-0001/members/${senior.id}/admin`)).status).toBe(403);
+      expect((await junior.delete(`/projects/PRJ-0001/members/${senior.id}`)).status).toBe(403);
+
+      expect((await senior.delete(`/projects/PRJ-0001/members/${junior.id}/admin`)).status).toBe(204);
+      expect((await junior.get('/projects/PRJ-0001')).body.isAdmin).toBe(false);
+    });
+
+    it('re-promoting an admin keeps their seniority', async () => {
+      const senior = await signUp(app);
+      const junior = await signUp(app);
+      await senior.post('/projects', project);
+      await addMember('PRJ-0001', junior.id, true);
+
+      expect((await junior.post(`/projects/PRJ-0001/members/${junior.id}/admin`)).status).toBe(204);
+      expect((await junior.delete(`/projects/PRJ-0001/members/${senior.id}/admin`)).status).toBe(403);
+    });
+
+    it('a superadmin outranks every project admin', async () => {
+      const owner = await signUp(app);
+      const boss = await signUp(app, 'super_admin');
+      const other = await signUp(app);
+      await owner.post('/projects', project);
+      await addMember('PRJ-0001', other.id, true);
+
+      expect((await boss.delete(`/projects/PRJ-0001/members/${owner.id}/admin`)).status).toBe(204);
+      expect((await boss.delete(`/projects/PRJ-0001/members/${owner.id}`)).status).toBe(204);
+    });
+
+    it('any member can leave, the last admin cannot step down', async () => {
+      const owner = await signUp(app);
+      const member = await signUp(app);
       await owner.post('/projects', project);
       await addMember('PRJ-0001', member.id);
 
+      expect((await member.delete(`/projects/PRJ-0001/members/${member.id}`)).status).toBe(204);
+      expect((await member.get('/projects/PRJ-0001')).status).toBe(404);
+      expect((await owner.delete(`/projects/PRJ-0001/members/${owner.id}/admin`)).status).toBe(409);
+    });
+
+    it('a regular member cannot remove or demote others', async () => {
+      const owner = await signUp(app);
+      const member = await signUp(app);
+      const other = await signUp(app);
+      await owner.post('/projects', project);
+      await addMember('PRJ-0001', member.id);
+      await addMember('PRJ-0001', other.id);
+
+      expect((await member.delete(`/projects/PRJ-0001/members/${other.id}`)).status).toBe(403);
+      expect((await member.delete(`/projects/PRJ-0001/members/${owner.id}/admin`)).status).toBe(403);
+    });
+
+    it('lists admins first, by seniority', async () => {
+      const owner = await signUp(app, 'user', 'Zed');
+      const junior = await signUp(app, 'user', 'Ann');
+      const member = await signUp(app, 'user', 'Abe');
+      await owner.post('/projects', project);
+      await addMember('PRJ-0001', member.id);
+      await addMember('PRJ-0001', junior.id, true);
+
       const res = await owner.get('/projects/PRJ-0001/members');
-      expect(res.body.map((m: any) => m.name)).toEqual(['Zed', 'Abe']);
+      expect(res.body.map((m: any) => m.name)).toEqual(['Zed', 'Ann', 'Abe']);
+      expect(res.body[2]).toMatchObject({ isAdmin: false, adminSince: null });
     });
   });
 

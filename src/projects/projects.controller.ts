@@ -68,6 +68,19 @@ export class ProjectsController {
     await this.members.makeAdmin(await this.access.resolve(user, code, { admin: true }), userId);
   }
 
+  // Seniority rules live in MembersService: any member may step down,
+  // admins only demote admins appointed after them.
+  @Delete(':code/members/:userId/admin')
+  @HttpCode(204)
+  async demote(
+    @CurrentUser() user: AuthUser,
+    @Param('code') code: string,
+    @Param('userId', ParseUUIDPipe) userId: string,
+  ): Promise<void> {
+    await this.members.demote(user, await this.access.resolve(user, code), userId);
+  }
+
+  // Same rules as demote; removing yourself is leaving the project.
   @Delete(':code/members/:userId')
   @HttpCode(204)
   async removeMember(
@@ -75,6 +88,6 @@ export class ProjectsController {
     @Param('code') code: string,
     @Param('userId', ParseUUIDPipe) userId: string,
   ): Promise<void> {
-    await this.members.remove(await this.access.resolve(user, code, { admin: true }), userId);
+    await this.members.remove(user, await this.access.resolve(user, code), userId);
   }
 }

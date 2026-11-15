@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { boolean, check, date, index, integer, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { check, date, index, integer, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { users } from './users';
 
 export const projects = pgTable(
@@ -33,7 +33,9 @@ export const projectMembers = pgTable(
     userId: uuid('user_id')
       .notNull()
       .references(() => users.id),
-    isAdmin: boolean('is_admin').notNull().default(false),
+    // Null for regular members. Earlier = more senior: an admin can only
+    // demote or remove admins appointed after them.
+    adminSince: timestamp('admin_since', { withTimezone: true }),
     joinedAt: timestamp('joined_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.projectId, t.userId] }), index('project_members_user_id_idx').on(t.userId)],

@@ -389,6 +389,40 @@
         "tags": [
           "projects"
         ]
+      },
+      "delete": {
+        "operationId": "ProjectsController_demote",
+        "parameters": [
+          {
+            "name": "code",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "projects"
+        ]
       }
     },
     "/projects/{code}/members/{userId}": {
@@ -670,6 +704,12 @@
           "isAdmin": {
             "type": "boolean"
           },
+          "adminSince": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "When they became project admin; earlier = more senior. Null for regular members."
+          },
           "joinedAt": {
             "format": "date-time",
             "type": "string"
@@ -680,6 +720,7 @@
           "name",
           "email",
           "isAdmin",
+          "adminSince",
           "joinedAt"
         ]
       }

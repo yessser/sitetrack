@@ -77,5 +77,7 @@ export class MemberDto {
   name!: string;
   email!: string;
   isAdmin!: boolean;
+  /** When they became project admin; earlier = more senior. Null for regular members. */
+  adminSince!: Date | null;
   joinedAt!: Date;
 }

@@ -28,7 +28,7 @@ export class ProjectsService {
         .insert(projects)
         .values({ name: dto.name, startDate: dto.startDate, endDate: dto.endDate, createdBy: user.userId })
         .returning({ id: projects.id, ...projectFields });
-      await tx.insert(projectMembers).values({ projectId: project.id, userId: user.userId, isAdmin: true });
+      await tx.insert(projectMembers).values({ projectId: project.id, userId: user.userId, adminSince: new Date() });
       const { id, ...rest } = project;
       return { ...rest, isAdmin: true, memberCount: 1 };
     });
@@ -44,7 +44,7 @@ export class ProjectsService {
     const base = this.db
       .select({
         ...projectFields,
-        isAdmin: sql<boolean>`coalesce(${projectMembers.isAdmin}, false)`,
+        isAdmin: sql<boolean>`${projectMembers.adminSince} is not null`,
         memberCount,
         total: sql<number>`count(*) over ()::int`,
       })

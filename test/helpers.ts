@@ -22,8 +22,8 @@ export async function resetDb() {
 
 export async function addMember(code: string, userId: string, isAdmin = false) {
   await pool.query(
-    `INSERT INTO project_members (project_id, user_id, is_admin)
-     SELECT id, $2, $3 FROM projects WHERE code = $1`,
+    `INSERT INTO project_members (project_id, user_id, admin_since)
+     SELECT id, $2, CASE WHEN $3 THEN clock_timestamp() END FROM projects WHERE code = $1`,
     [code, userId, isAdmin],
   );
 }
