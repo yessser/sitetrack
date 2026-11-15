@@ -2,7 +2,7 @@ import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { and, asc, eq, isNull, sql } from 'drizzle-orm';
 import type { AuthUser } from '../auth/current-user';
 import { DB, type Db } from '../db/db.module';
-import { projectMembers, projects } from '../db/schema';
+import { invitations, projectMembers, projects } from '../db/schema';
 import type { CreateProjectDto, PageQueryDto, UpdateProjectDto } from './dto/project.dto';
 import type { ProjectAccess } from './project-access.service';
 
@@ -79,10 +79,17 @@ export class ProjectsService {
   }
 
   async remove(access: ProjectAccess) {
-    await this.db
-      .update(projects)
-      .set({ deletedAt: new Date() })
-      .where(and(eq(projects.id, access.projectId), isNull(projects.deletedAt)));
+    await this.db.transaction(async (tx) => {
+      await tx
+        .update(projects)
+        .set({ deletedAt: new Date() })
+        .where(and(eq(projects.id, access.projectId), isNull(projects.deletedAt)));
+      // Pending invitations die with the project, so the invitee can no longer accept.
+      await tx
+        .update(invitations)
+        .set({ status: 'withdrawn', answeredAt: new Date() })
+        .where(and(eq(invitations.projectId, access.projectId), eq(invitations.status, 'pending')));
+    });
   }
 
   private assertDates(start: string, end: string) {

@@ -460,6 +460,263 @@
           "projects"
         ]
       }
+    },
+    "/projects/{code}/invitations": {
+      "get": {
+        "operationId": "ProjectInvitationsController_list",
+        "parameters": [
+          {
+            "name": "code",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectInvitationDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "invitations"
+        ]
+      },
+      "post": {
+        "operationId": "ProjectInvitationsController_invite",
+        "parameters": [
+          {
+            "name": "code",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInvitationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectInvitationDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "invitations"
+        ]
+      }
+    },
+    "/projects/{code}/invitations/{id}": {
+      "delete": {
+        "operationId": "ProjectInvitationsController_withdraw",
+        "parameters": [
+          {
+            "name": "code",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "invitations"
+        ]
+      }
+    },
+    "/invitations": {
+      "get": {
+        "operationId": "MyInvitationsController_list",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "default": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyInvitationPageDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Invitations addressed to me (the Notifications screen). Marks the returned page read.",
+        "tags": [
+          "invitations"
+        ]
+      }
+    },
+    "/invitations/unread-count": {
+      "get": {
+        "operationId": "MyInvitationsController_unreadCount",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnreadCountDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Pending invitations I have not seen yet.",
+        "tags": [
+          "invitations"
+        ]
+      }
+    },
+    "/invitations/{id}/accept": {
+      "post": {
+        "operationId": "MyInvitationsController_accept",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Joins the project and returns it.",
+        "tags": [
+          "invitations"
+        ]
+      }
+    },
+    "/invitations/{id}/reject": {
+      "post": {
+        "operationId": "MyInvitationsController_reject",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "invitations"
+        ]
+      }
     }
   },
   "info": {
@@ -722,6 +979,166 @@
           "isAdmin",
           "adminSince",
           "joinedAt"
+        ]
+      },
+      "ProjectInvitationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 17
+          },
+          "inviteeId": {
+            "type": "string"
+          },
+          "inviteeName": {
+            "type": "string"
+          },
+          "inviteeEmail": {
+            "type": "string"
+          },
+          "invitedById": {
+            "type": "string"
+          },
+          "invitedByName": {
+            "type": "string"
+          },
+          "status": {
+            "example": "pending",
+            "enum": [
+              "pending",
+              "accepted",
+              "rejected",
+              "withdrawn"
+            ],
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "inviteeId",
+          "inviteeName",
+          "inviteeEmail",
+          "invitedById",
+          "invitedByName",
+          "status",
+          "createdAt"
+        ]
+      },
+      "CreateInvitationDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "The registered user to invite.",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "userId"
+        ]
+      },
+      "MyInvitationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 17
+          },
+          "projectCode": {
+            "type": "string",
+            "example": "PRJ-0042"
+          },
+          "projectName": {
+            "type": "string",
+            "example": "North tower"
+          },
+          "invitedById": {
+            "type": "string"
+          },
+          "invitedByName": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "description": "Accept and Reject are only offered while pending.",
+            "enum": [
+              "pending",
+              "accepted",
+              "rejected",
+              "withdrawn"
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "answeredAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "When it was accepted, rejected or withdrawn."
+          },
+          "readAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "When the invitee first saw it, as it was before this request. Null means\nnew on this visit; listing marks the returned page as read."
+          }
+        },
+        "required": [
+          "id",
+          "projectCode",
+          "projectName",
+          "invitedById",
+          "invitedByName",
+          "status",
+          "createdAt",
+          "answeredAt",
+          "readAt"
+        ]
+      },
+      "MyInvitationPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MyInvitationDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Total matching rows across all pages."
+          },
+          "limit": {
+            "type": "number"
+          },
+          "offset": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ]
+      },
+      "UnreadCountDto": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number",
+            "description": "Pending invitations the invitee has not seen yet."
+          }
+        },
+        "required": [
+          "count"
         ]
       }
     }

@@ -12,8 +12,8 @@ export async function createTestApp() {
   return app;
 }
 
-// Direct DB access for setup the API doesn't expose yet (eg adding members
-// before invitations exist) and for wiping state between tests.
+// Direct DB access for setup shortcuts (eg adding members without the
+// invite/accept round trip) and for wiping state between tests.
 export const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 2 });
 
 export async function resetDb() {
