@@ -14,6 +14,10 @@ export const projects = pgTable(
     name: text('name').notNull(),
     startDate: date('start_date', { mode: 'string' }).notNull(),
     endDate: date('end_date', { mode: 'string' }).notNull(),
+    // Per-project task counter. Bumped with UPDATE ... RETURNING, which locks
+    // the project row so concurrent task creates in one project queue up and
+    // each gets its own number. Never decremented, so numbers are not reused.
+    nextTaskNumber: integer('next_task_number').notNull().default(1),
     createdBy: uuid('created_by')
       .notNull()
       .references(() => users.id),

@@ -7,6 +7,7 @@ import { DbModule } from './db/db.module';
 import { HealthController } from './health/health.controller';
 import { InvitationsModule } from './invitations/invitations.module';
 import { ProjectsModule } from './projects/projects.module';
+import { TasksModule } from './tasks/tasks.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -19,6 +20,7 @@ import { UsersModule } from './users/users.module';
     UsersModule,
     ProjectsModule,
     InvitationsModule,
+    TasksModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
   controllers: [HealthController],

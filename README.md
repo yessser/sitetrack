@@ -38,6 +38,12 @@ in this step i realized i have not been writing tests and did not explain that p
   - for admin roles iam adding a demote to member action. with some simple logic that older admins can revoke newer ones. if i want to make it changable i would make a hiarchy list were the ones above can changes the one under and themselves.
 # notifications table
   - in this asignment it might be simpler to have notification only handle invitations. eg only a table of invitation of user X project. but in a real scenario we probably would want it to handle more then that (messages/tags, projects milestone updates,emails/push notifciations or other websocket expansions ect), and this probably open a can of worms of complex logic (message broker like rabbitMQ and redis for cache ect) just to keep my sanity and deliver this project i will only handle invitations in the simplest case a table index by users organized by time(aka in my case notification=invitation which usually isnt the case), and frontend would just poll the endpoint (no websocket). in a real scenario i would porbably search for a package or service maybe.
+# tasks 
+  - well this might be the most complex part that may require a bit more drilling. especially in the case of syncing changes and conflicts (two people changing same/related things around the same  moment.) judging by the UI i dont think we will need a "live editing" feature using websockets. theres the case of batch edit which could cause odd issues (person A try to batch change multiple tasks to done but one of these tasks becomes invalid cause B added a new depedency). as a backend engineer i will just mmake the API flexible enough and give the necessary tools to handle this type of errors. in this case the key things are
+  -- SSE to make frontend refresh data. "task version" that can used to compare different state changes and get from (eg user still in version 1 but latests is version 3). 
+  -- a way to keep track of graph versions to handle batch changes merge conflicts. theres probably fancy complex solution maybe  using hashes like some type of merkel tree but i will simply use the mentioned "task version" to know what changed and what needs a check . and they are only refused if a change breaks the backend rule
+  -- i could also keep a changelog table. which could be useful to return to previous versions. i think im gonna stick to this changelog table its just more robust for future needs. i will have to trim it tho after X amount of time.
+  - other key things implemented here would be write lock per project when adding tasks this confirms no cycle are created and enforce the hisotry/versions
 ----------
 # Models
 
@@ -91,6 +97,7 @@ classDiagram
     text name
     date start_date
     date end_date
+    int next_task_number "task counter"
     uuid created_by FK
     timestamptz created_at
     timestamptz updated_at
@@ -116,3 +123,60 @@ classDiagram
 | GET | `/projects/:code/members` | members, SuperAdmin |
 | POST | `/projects/:code/members/:userId/admin` | project admins, SuperAdmin |
 | DELETE | `/projects/:code/members/:userId` | project admins, SuperAdmin |
+
+## Task
+
+```mermaid
+classDiagram
+  class Task {
+    int id PK "identity, internal"
+    int project_id FK
+    int number "from projects.next_task_number"
+    text code "generated: PRJ-0042-T-0137"
+    text name
+    date start_date
+    date end_date
+    task_status status
+    uuid created_by FK
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz deleted_at NULL
+  }
+  class task_status {
+    <<enumeration>>
+    not_started
+    in_progress
+    done
+  }
+  class TaskDependency {
+    int project_id PK, FK
+    int task_id PK, FK "waits"
+    int depends_on_id PK, FK "is waited on"
+    timestamptz created_at
+  }
+  Project "1" --> "*" Task
+  Task --> task_status
+  Task "1" --> "*" TaskDependency : task_id
+  Task "1" --> "*" TaskDependency : depends_on_id
+```
+
+```mermaid
+stateDiagram-v2
+  [*] --> not_started
+  not_started --> in_progress : start (every task it waits on is done)
+  in_progress --> done : done
+  done --> in_progress : reopen (nothing waiting on it has started)
+```
+
+| Method | Path | Who |
+|---|---|---|
+| POST | `/projects/:code/tasks` | members, SuperAdmin |
+| GET | `/projects/:code/tasks` | members, SuperAdmin (`status`, `late`, `blocked`, `from`, `to`, `q`, `sort`, `order`) |
+| GET | `/projects/:code/tasks/:taskCode` | members, SuperAdmin |
+| PATCH | `/projects/:code/tasks/:taskCode` | members, SuperAdmin |
+| DELETE | `/projects/:code/tasks/:taskCode` | members, SuperAdmin (soft delete) |
+| POST | `/projects/:code/tasks/:taskCode/start` | members, SuperAdmin |
+| POST | `/projects/:code/tasks/:taskCode/done` | members, SuperAdmin |
+| POST | `/projects/:code/tasks/:taskCode/reopen` | members, SuperAdmin |
+| POST | `/projects/:code/tasks/:taskCode/dependencies` | members, SuperAdmin |
+| DELETE | `/projects/:code/tasks/:taskCode/dependencies/:dependsOnCode` | members, SuperAdmin |

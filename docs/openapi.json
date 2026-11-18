@@ -717,6 +717,551 @@
           "invitations"
         ]
       }
+    },
+    "/projects/{code}/tasks": {
+      "post": {
+        "operationId": "TasksController_create",
+        "parameters": [
+          {
+            "name": "code",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTaskDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskDetailDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "tasks"
+        ]
+      },
+      "get": {
+        "operationId": "TasksController_list",
+        "parameters": [
+          {
+            "name": "code",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "default": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "not_started",
+                "in_progress",
+                "done"
+              ]
+            }
+          },
+          {
+            "name": "late",
+            "required": false,
+            "in": "query",
+            "description": "true: only late tasks, false: only tasks that are not late.",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "blocked",
+            "required": false,
+            "in": "query",
+            "description": "true: only blocked tasks, false: only tasks that are not blocked.",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "code",
+              "type": "string",
+              "enum": [
+                "code",
+                "name",
+                "startDate",
+                "endDate",
+                "dependents"
+              ]
+            }
+          },
+          {
+            "name": "order",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "asc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "Planned date range: keeps tasks whose planned dates overlap [from, to].",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Case-insensitive match on the name or the task ID.",
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskPageDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "tasks"
+        ]
+      }
+    },
+    "/projects/{code}/tasks/{taskCode}": {
+      "get": {
+        "operationId": "TasksController_get",
+        "parameters": [
+          {
+            "name": "code",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taskCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskDetailDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "tasks"
+        ]
+      },
+      "patch": {
+        "operationId": "TasksController_update",
+        "parameters": [
+          {
+            "name": "code",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taskCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTaskDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskDetailDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "tasks"
+        ]
+      },
+      "delete": {
+        "operationId": "TasksController_remove",
+        "parameters": [
+          {
+            "name": "code",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taskCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "tasks"
+        ]
+      }
+    },
+    "/projects/{code}/tasks/{taskCode}/start": {
+      "post": {
+        "operationId": "TasksController_start",
+        "parameters": [
+          {
+            "name": "code",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taskCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskDetailDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Not started → In progress.",
+        "tags": [
+          "tasks"
+        ]
+      }
+    },
+    "/projects/{code}/tasks/{taskCode}/done": {
+      "post": {
+        "operationId": "TasksController_done",
+        "parameters": [
+          {
+            "name": "code",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taskCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskDetailDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "In progress → Done.",
+        "tags": [
+          "tasks"
+        ]
+      }
+    },
+    "/projects/{code}/tasks/{taskCode}/reopen": {
+      "post": {
+        "operationId": "TasksController_reopen",
+        "parameters": [
+          {
+            "name": "code",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taskCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskDetailDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Done → In progress.",
+        "tags": [
+          "tasks"
+        ]
+      }
+    },
+    "/projects/{code}/tasks/{taskCode}/dependencies": {
+      "post": {
+        "operationId": "TasksController_addDependency",
+        "parameters": [
+          {
+            "name": "code",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taskCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddDependencyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskDetailDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Makes this task wait on another task of the same project.",
+        "tags": [
+          "tasks"
+        ]
+      }
+    },
+    "/projects/{code}/tasks/{taskCode}/dependencies/{dependsOnCode}": {
+      "delete": {
+        "operationId": "TasksController_removeDependency",
+        "parameters": [
+          {
+            "name": "code",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "taskCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dependsOnCode",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "This task stops waiting on `dependsOnCode`.",
+        "tags": [
+          "tasks"
+        ]
+      }
     }
   },
   "info": {
@@ -1139,6 +1684,301 @@
         },
         "required": [
           "count"
+        ]
+      },
+      "CreateTaskDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Pour level 2 slab",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "startDate": {
+            "type": "string"
+          },
+          "endDate": {
+            "type": "string"
+          },
+          "dependsOn": {
+            "description": "IDs of tasks in the same project this task waits on.",
+            "example": [
+              "PRJ-0042-T-0135",
+              "PRJ-0042-T-0136"
+            ],
+            "uniqueItems": true,
+            "maxItems": 200,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "startDate",
+          "endDate"
+        ]
+      },
+      "TaskLinkDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "not_started",
+              "in_progress",
+              "done"
+            ],
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "example": "PRJ-0042-T-0135"
+          },
+          "name": {
+            "type": "string",
+            "example": "Rebar level 2"
+          },
+          "steps": {
+            "type": "number",
+            "description": "Fewest dependency steps between the two tasks; 1 means a direct link."
+          }
+        },
+        "required": [
+          "status",
+          "code",
+          "name",
+          "steps"
+        ]
+      },
+      "TaskDetailDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "not_started",
+              "in_progress",
+              "done"
+            ],
+            "type": "string"
+          },
+          "allowedActions": {
+            "type": "array",
+            "description": "The status actions allowed right now.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "start",
+                "done",
+                "reopen"
+              ]
+            }
+          },
+          "waitsOn": {
+            "description": "Every task it waits on, directly or indirectly, nearest first.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaskLinkDto"
+            }
+          },
+          "waitedBy": {
+            "description": "Every task that waits on it, directly or indirectly, nearest first.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaskLinkDto"
+            }
+          },
+          "code": {
+            "type": "string",
+            "example": "PRJ-0042-T-0137"
+          },
+          "name": {
+            "type": "string",
+            "example": "Pour level 2 slab"
+          },
+          "startDate": {
+            "type": "string",
+            "example": "2026-03-01"
+          },
+          "endDate": {
+            "type": "string",
+            "example": "2026-03-14"
+          },
+          "isLate": {
+            "type": "boolean",
+            "description": "Derived, never set by hand: not done and the planned end date has passed,\nor not started and the planned start date has passed (server date)."
+          },
+          "isBlocked": {
+            "type": "boolean",
+            "description": "Derived, never set by hand: not done, and at least one task it waits on,\ndirectly or indirectly, is not done."
+          },
+          "dependsOn": {
+            "description": "IDs of the tasks it directly depends on, in ID order.",
+            "example": [
+              "PRJ-0042-T-0135"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dependentsCount": {
+            "type": "number",
+            "description": "How many tasks directly depend on it."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "allowedActions",
+          "waitsOn",
+          "waitedBy",
+          "code",
+          "name",
+          "startDate",
+          "endDate",
+          "isLate",
+          "isBlocked",
+          "dependsOn",
+          "dependentsCount",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "TaskDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "not_started",
+              "in_progress",
+              "done"
+            ],
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "example": "PRJ-0042-T-0137"
+          },
+          "name": {
+            "type": "string",
+            "example": "Pour level 2 slab"
+          },
+          "startDate": {
+            "type": "string",
+            "example": "2026-03-01"
+          },
+          "endDate": {
+            "type": "string",
+            "example": "2026-03-14"
+          },
+          "isLate": {
+            "type": "boolean",
+            "description": "Derived, never set by hand: not done and the planned end date has passed,\nor not started and the planned start date has passed (server date)."
+          },
+          "isBlocked": {
+            "type": "boolean",
+            "description": "Derived, never set by hand: not done, and at least one task it waits on,\ndirectly or indirectly, is not done."
+          },
+          "dependsOn": {
+            "description": "IDs of the tasks it directly depends on, in ID order.",
+            "example": [
+              "PRJ-0042-T-0135"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dependentsCount": {
+            "type": "number",
+            "description": "How many tasks directly depend on it."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "code",
+          "name",
+          "startDate",
+          "endDate",
+          "isLate",
+          "isBlocked",
+          "dependsOn",
+          "dependentsCount",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "TaskPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaskDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Total matching rows across all pages."
+          },
+          "limit": {
+            "type": "number"
+          },
+          "offset": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ]
+      },
+      "UpdateTaskDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "startDate": {
+            "type": "string"
+          },
+          "endDate": {
+            "type": "string"
+          }
+        }
+      },
+      "AddDependencyDto": {
+        "type": "object",
+        "properties": {
+          "dependsOn": {
+            "type": "string",
+            "description": "ID of a task in the same project that this task will wait on.",
+            "example": "PRJ-0042-T-0135"
+          }
+        },
+        "required": [
+          "dependsOn"
         ]
       }
     }
