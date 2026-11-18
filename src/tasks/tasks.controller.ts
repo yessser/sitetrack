@@ -57,7 +57,7 @@ export class TasksController {
     @Param('taskCode') taskCode: string,
     @Body() dto: UpdateTaskDto,
   ): Promise<TaskDetailDto> {
-    return this.tasks.update(await this.access.resolve(user, code), taskCode, dto);
+    return this.tasks.update(user, await this.access.resolve(user, code), taskCode, dto);
   }
 
   @Delete(':taskCode')
@@ -67,7 +67,7 @@ export class TasksController {
     @Param('code') code: string,
     @Param('taskCode') taskCode: string,
   ): Promise<void> {
-    await this.tasks.remove(await this.access.resolve(user, code), taskCode);
+    await this.tasks.remove(user, await this.access.resolve(user, code), taskCode);
   }
 
   /** Not started → In progress. */
@@ -78,7 +78,7 @@ export class TasksController {
     @Param('code') code: string,
     @Param('taskCode') taskCode: string,
   ): Promise<TaskDetailDto> {
-    return this.tasks.transition(await this.access.resolve(user, code), taskCode, 'start');
+    return this.tasks.transition(user, await this.access.resolve(user, code), taskCode, 'start');
   }
 
   /** In progress → Done. */
@@ -89,7 +89,7 @@ export class TasksController {
     @Param('code') code: string,
     @Param('taskCode') taskCode: string,
   ): Promise<TaskDetailDto> {
-    return this.tasks.transition(await this.access.resolve(user, code), taskCode, 'done');
+    return this.tasks.transition(user, await this.access.resolve(user, code), taskCode, 'done');
   }
 
   /** Done → In progress. */
@@ -100,7 +100,7 @@ export class TasksController {
     @Param('code') code: string,
     @Param('taskCode') taskCode: string,
   ): Promise<TaskDetailDto> {
-    return this.tasks.transition(await this.access.resolve(user, code), taskCode, 'reopen');
+    return this.tasks.transition(user, await this.access.resolve(user, code), taskCode, 'reopen');
   }
 
   /** Makes this task wait on another task of the same project. */
@@ -111,7 +111,7 @@ export class TasksController {
     @Param('taskCode') taskCode: string,
     @Body() dto: AddDependencyDto,
   ): Promise<TaskDetailDto> {
-    return this.tasks.addDependency(await this.access.resolve(user, code), taskCode, dto);
+    return this.tasks.addDependency(user, await this.access.resolve(user, code), taskCode, dto);
   }
 
   /** This task stops waiting on `dependsOnCode`. */
@@ -123,6 +123,6 @@ export class TasksController {
     @Param('taskCode') taskCode: string,
     @Param('dependsOnCode') dependsOnCode: string,
   ): Promise<void> {
-    await this.tasks.removeDependency(await this.access.resolve(user, code), taskCode, dependsOnCode);
+    await this.tasks.removeDependency(user, await this.access.resolve(user, code), taskCode, dependsOnCode);
   }
 }

@@ -18,6 +18,9 @@ export const projects = pgTable(
     // the project row so concurrent task creates in one project queue up and
     // each gets its own number. Never decremented, so numbers are not reused.
     nextTaskNumber: integer('next_task_number').notNull().default(1),
+    // Bumped once per task batch that changed something; task_changes rows
+    // carry the version they produced, so clients sync with ?since=<version>.
+    graphVersion: integer('graph_version').notNull().default(0),
     createdBy: uuid('created_by')
       .notNull()
       .references(() => users.id),

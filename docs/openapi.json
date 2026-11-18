@@ -718,6 +718,157 @@
         ]
       }
     },
+    "/projects/{code}/tasks/snapshot": {
+      "get": {
+        "operationId": "TaskChangesController_snapshot",
+        "parameters": [
+          {
+            "name": "code",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskSnapshotDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Every live task and link of the project, with the version they are at.",
+        "tags": [
+          "tasks"
+        ]
+      }
+    },
+    "/projects/{code}/tasks/changes": {
+      "post": {
+        "operationId": "TaskChangesController_apply",
+        "parameters": [
+          {
+            "name": "code",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dryRun",
+            "required": false,
+            "in": "query",
+            "description": "true: check the batch and show what it would do, without saving.",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskBatchDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskBatchResultDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "In `errors` of the body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TaskBatchErrorDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "Applies a batch of changes, all or nothing. A rejected batch answers with\nevery problem in `errors`: 409 if any is about the current state (a\nconflict, a cycle, a status rule), else 400.",
+        "tags": [
+          "tasks"
+        ]
+      },
+      "get": {
+        "operationId": "TaskChangesController_since",
+        "parameters": [
+          {
+            "name": "code",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "since",
+            "required": true,
+            "in": "query",
+            "description": "The version the client is at: changes after it are returned.",
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskChangesPageDto"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "The log no longer reaches back to `since`: reload the snapshot."
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "summary": "The changelog after `since`, oldest first.",
+        "tags": [
+          "tasks"
+        ]
+      }
+    },
     "/projects/{code}/tasks": {
       "post": {
         "operationId": "TasksController_create",
@@ -1684,6 +1835,379 @@
         },
         "required": [
           "count"
+        ]
+      },
+      "TaskSnapshotTaskDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "not_started",
+              "in_progress",
+              "done"
+            ],
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "example": "PRJ-0042-T-0137"
+          },
+          "name": {
+            "type": "string"
+          },
+          "startDate": {
+            "type": "string"
+          },
+          "endDate": {
+            "type": "string"
+          },
+          "isLate": {
+            "type": "boolean"
+          },
+          "isBlocked": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "code",
+          "name",
+          "startDate",
+          "endDate",
+          "isLate",
+          "isBlocked",
+          "updatedAt"
+        ]
+      },
+      "TaskSnapshotLinkDto": {
+        "type": "object",
+        "properties": {
+          "task": {
+            "type": "string",
+            "example": "PRJ-0042-T-0137"
+          },
+          "dependsOn": {
+            "type": "string",
+            "example": "PRJ-0042-T-0135"
+          }
+        },
+        "required": [
+          "task",
+          "dependsOn"
+        ]
+      },
+      "TaskSnapshotDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number",
+            "description": "Poll GET changes?since=<version> to stay up to date."
+          },
+          "tasks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaskSnapshotTaskDto"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaskSnapshotLinkDto"
+            }
+          }
+        },
+        "required": [
+          "version",
+          "tasks",
+          "links"
+        ]
+      },
+      "BatchCreateDto": {
+        "type": "object",
+        "properties": {
+          "ref": {
+            "type": "string",
+            "description": "The client's name for the new task, unique within the batch. Other items\nof the batch can use it in place of an ID; the response maps it to the\nreal ID. Must not start with \"PRJ-\".",
+            "example": "draft-1",
+            "pattern": "^(?!PRJ-)[A-Za-z0-9_.:-]{1,64}$"
+          },
+          "name": {
+            "type": "string",
+            "example": "Pour level 2 slab",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "startDate": {
+            "type": "string",
+            "example": "2026-03-01"
+          },
+          "endDate": {
+            "type": "string",
+            "example": "2026-03-14"
+          }
+        },
+        "required": [
+          "ref",
+          "name",
+          "startDate",
+          "endDate"
+        ]
+      },
+      "TaskFieldsDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "description": "Any move is allowed except back to not_started.",
+            "enum": [
+              "not_started",
+              "in_progress",
+              "done"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "example": "Pour level 2 slab",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "startDate": {
+            "type": "string",
+            "example": "2026-03-01"
+          },
+          "endDate": {
+            "type": "string",
+            "example": "2026-03-14"
+          }
+        }
+      },
+      "BatchUpdateDto": {
+        "type": "object",
+        "properties": {
+          "task": {
+            "type": "string",
+            "example": "PRJ-0042-T-0137"
+          },
+          "set": {
+            "$ref": "#/components/schemas/TaskFieldsDto"
+          },
+          "expect": {
+            "description": "The values the client last saw. A field that has since been changed by\nsomeone else to something other than `set` makes the batch fail with a\nconflict; without `expect`, the last write wins.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaskFieldsDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "task",
+          "set"
+        ]
+      },
+      "BatchLinkDto": {
+        "type": "object",
+        "properties": {
+          "task": {
+            "type": "string",
+            "example": "PRJ-0042-T-0137"
+          },
+          "dependsOn": {
+            "type": "string",
+            "example": "PRJ-0042-T-0135"
+          }
+        },
+        "required": [
+          "task",
+          "dependsOn"
+        ]
+      },
+      "TaskBatchDto": {
+        "type": "object",
+        "properties": {
+          "create": {
+            "maxItems": 5000,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BatchCreateDto"
+            }
+          },
+          "update": {
+            "maxItems": 5000,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BatchUpdateDto"
+            }
+          },
+          "link": {
+            "maxItems": 5000,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BatchLinkDto"
+            }
+          },
+          "unlink": {
+            "maxItems": 5000,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BatchLinkDto"
+            }
+          },
+          "remove": {
+            "example": [
+              "PRJ-0042-T-0140"
+            ],
+            "maxItems": 5000,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 64
+            }
+          }
+        }
+      },
+      "TaskChangeDto": {
+        "type": "object",
+        "properties": {
+          "op": {
+            "enum": [
+              "create",
+              "update",
+              "link",
+              "unlink",
+              "remove"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "type": "number",
+            "description": "The graph version the change produced; shared by every change of one batch."
+          },
+          "task": {
+            "type": "string",
+            "example": "PRJ-0042-T-0137"
+          },
+          "dependsOn": {
+            "type": "string",
+            "description": "link / unlink only.",
+            "example": "PRJ-0042-T-0135"
+          },
+          "data": {
+            "description": "create: every field. update: only the fields that changed, with their new values.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaskFieldsDto"
+              }
+            ]
+          },
+          "prev": {
+            "description": "update only: the values those fields had before.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaskFieldsDto"
+              }
+            ]
+          },
+          "by": {
+            "type": "string",
+            "description": "User ID of who made the change."
+          },
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "op",
+          "version",
+          "task",
+          "by",
+          "at"
+        ]
+      },
+      "TaskBatchResultDto": {
+        "type": "object",
+        "properties": {
+          "refs": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "ref of every created task -> its ID.",
+            "example": {
+              "draft-1": "PRJ-0042-T-0141"
+            }
+          },
+          "version": {
+            "type": "number",
+            "description": "The project's graph version after the batch (unchanged by a dry run or a batch that changed nothing)."
+          },
+          "changes": {
+            "description": "What the batch changed, as written to the changelog. Items that changed nothing are left out.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaskChangeDto"
+            }
+          }
+        },
+        "required": [
+          "refs",
+          "version",
+          "changes"
+        ]
+      },
+      "TaskBatchErrorDto": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string",
+            "description": "The item at fault.",
+            "example": "update[2]"
+          },
+          "task": {
+            "type": "string",
+            "description": "The task as the item named it."
+          },
+          "code": {
+            "type": "string",
+            "example": "cycle"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "at",
+          "code",
+          "message"
+        ]
+      },
+      "TaskChangesPageDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number",
+            "description": "Pass this as `since` next time."
+          },
+          "hasMore": {
+            "type": "boolean",
+            "description": "More changes are waiting: ask again right away with the new version."
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaskChangeDto"
+            }
+          }
+        },
+        "required": [
+          "version",
+          "hasMore",
+          "changes"
         ]
       },
       "CreateTaskDto": {

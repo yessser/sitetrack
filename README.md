@@ -98,6 +98,7 @@ classDiagram
     date start_date
     date end_date
     int next_task_number "task counter"
+    int graph_version "bumped once per task batch"
     uuid created_by FK
     timestamptz created_at
     timestamptz updated_at
@@ -158,6 +159,28 @@ classDiagram
   Task --> task_status
   Task "1" --> "*" TaskDependency : task_id
   Task "1" --> "*" TaskDependency : depends_on_id
+  class TaskChange {
+    int project_id PK, FK
+    int version PK "projects.graph_version it produced"
+    int seq PK "order inside the batch"
+    uuid user_id FK
+    timestamptz created_at
+    task_change_op op
+    int task_number
+    int depends_on_number NULL "link/unlink only"
+    jsonb data NULL "new values"
+    jsonb prev NULL "old values, updates only"
+  }
+  class task_change_op {
+    <<enumeration>>
+    create
+    update
+    link
+    unlink
+    remove
+  }
+  Project "1" --> "*" TaskChange
+  TaskChange --> task_change_op
 ```
 
 ```mermaid
@@ -180,3 +203,6 @@ stateDiagram-v2
 | POST | `/projects/:code/tasks/:taskCode/reopen` | members, SuperAdmin |
 | POST | `/projects/:code/tasks/:taskCode/dependencies` | members, SuperAdmin |
 | DELETE | `/projects/:code/tasks/:taskCode/dependencies/:dependsOnCode` | members, SuperAdmin |
+| GET | `/projects/:code/tasks/snapshot` | members, SuperAdmin (every task and link + `version`) |
+| POST | `/projects/:code/tasks/changes` | members, SuperAdmin (batch, all or nothing, `?dryRun`) |
+| GET | `/projects/:code/tasks/changes` | members, SuperAdmin (`?since=<version>`, 410 when trimmed) |
