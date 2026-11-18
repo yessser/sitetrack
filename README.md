@@ -44,6 +44,8 @@ in this step i realized i have not been writing tests and did not explain that p
   -- a way to keep track of graph versions to handle batch changes merge conflicts. theres probably fancy complex solution maybe  using hashes like some type of merkel tree but i will simply use the mentioned "task version" to know what changed and what needs a check . and they are only refused if a change breaks the backend rule
   -- i could also keep a changelog table. which could be useful to return to previous versions. i think im gonna stick to this changelog table its just more robust for future needs. i will have to trim it tho after X amount of time.
   - other key things implemented here would be write lock per project when adding tasks this confirms no cycle are created and enforce the hisotry/versions
+# delveries/store
+  - well in short this is some sort of inventory management. usually i would rather have a more complex repesentation of material. one that handle differents units of measure (eg purchase in Tons but use in KG.) and maybe lots on receipts/ purchase orders. in my case i will simply handle this as invotyr movement with materials coming from a material catalogue. so it will be  easy to see all movmenet of material X that happened.  
 ----------
 # Models
 
@@ -206,3 +208,47 @@ stateDiagram-v2
 | GET | `/projects/:code/tasks/snapshot` | members, SuperAdmin (every task and link + `version`) |
 | POST | `/projects/:code/tasks/changes` | members, SuperAdmin (batch, all or nothing, `?dryRun`) |
 | GET | `/projects/:code/tasks/changes` | members, SuperAdmin (`?since=<version>`, 410 when trimmed) |
+
+## Material catalogue
+
+```mermaid
+classDiagram
+  class Material {
+    int id PK "identity"
+    text name "not unique"
+    int category_id FK
+    int unit_id FK
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz deleted_at NULL
+  }
+  class Category {
+    int id PK "identity"
+    citext name "UNIQUE per parent"
+    int parent_id FK NULL "null = top level"
+  }
+  class Unit {
+    int id PK "identity"
+    text name
+    citext symbol UNIQUE
+  }
+  Category "1" --> "*" Category : parent_id
+  Category "1" --> "*" Material
+  Unit "1" --> "*" Material
+```
+
+| Method | Path | Who |
+|---|---|---|
+| GET | `/units` | any logged-in user |
+| POST | `/units` | store managers, SuperAdmin |
+| PATCH | `/units/:id` | store managers, SuperAdmin |
+| DELETE | `/units/:id` | store managers, SuperAdmin (409 while materials use it) |
+| GET | `/categories` | any logged-in user (flat list, tree via `parentId`) |
+| POST | `/categories` | store managers, SuperAdmin |
+| PATCH | `/categories/:id` | store managers, SuperAdmin (rename/move, 409 if moved inside itself) |
+| DELETE | `/categories/:id` | store managers, SuperAdmin (409 while it has subcategories or materials) |
+| GET | `/materials` | any logged-in user (`q`, `category` incl. subcategories, `sort`, `order`) |
+| GET | `/materials/:id` | any logged-in user |
+| POST | `/materials` | store managers, SuperAdmin |
+| PATCH | `/materials/:id` | store managers, SuperAdmin |
+| DELETE | `/materials/:id` | store managers, SuperAdmin (soft delete) |

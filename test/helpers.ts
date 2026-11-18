@@ -17,7 +17,7 @@ export async function createTestApp() {
 export const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 2 });
 
 export async function resetDb() {
-  await pool.query('TRUNCATE users, projects RESTART IDENTITY CASCADE');
+  await pool.query('TRUNCATE users, projects, materials, categories, units RESTART IDENTITY CASCADE');
 }
 
 export async function addMember(code: string, userId: string, isAdmin = false) {

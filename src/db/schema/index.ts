@@ -4,3 +4,4 @@ export * from './projects';
 export * from './invitations';
 export * from './tasks';
 export * from './task-changes';
+export * from './catalogue';

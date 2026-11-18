@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module';
+import { CatalogueModule } from './catalogue/catalogue.module';
 import { DbModule } from './db/db.module';
 import { HealthController } from './health/health.controller';
 import { InvitationsModule } from './invitations/invitations.module';
@@ -21,6 +22,7 @@ import { UsersModule } from './users/users.module';
     ProjectsModule,
     InvitationsModule,
     TasksModule,
+    CatalogueModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
   controllers: [HealthController],
